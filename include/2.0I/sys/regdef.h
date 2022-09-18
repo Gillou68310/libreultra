@@ -101,4 +101,6 @@
 #define ra	$31	/* return address */
 #endif
 
+#define fcr31	$31
+
 #endif /* __SYS_REGDEF_H__ */

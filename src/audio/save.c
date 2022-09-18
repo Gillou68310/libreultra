@@ -31,7 +31,9 @@ Acmd *alSavePull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset,
     ALSave *f = (ALSave *)filter;
     ALFilter    *source = f->filter.source;
 
+#ifdef _DEBUG
     assert(f->filter.source);
+#endif
     
     ptr = (*source->handler)(source, outp, outCount, sampleOffset, ptr);
     

@@ -1,9 +1,18 @@
 #include <os_internal.h>
 #include "siint.h"
 
+//TODO: How did __osSiDeviceBusy got inlined?
+static int __osSiDeviceBusy_()
+{
+    register u32 stat = IO_READ(SI_STATUS_REG);
+    if (stat & (SI_STATUS_DMA_BUSY | SI_STATUS_RD_BUSY))
+        return 1;
+    return 0;
+}
+
 s32 __osSiRawStartDma(s32 direction, void *dramAddr)
 {
-    if (__osSiDeviceBusy())
+    if (__osSiDeviceBusy_())
         return -1;
 
     if (direction == OS_WRITE)

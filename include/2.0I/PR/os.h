@@ -493,6 +493,21 @@ typedef struct {
 #define OS_VI_MPAL_HPN2		40
 #define OS_VI_MPAL_HPF2		41
 
+#define OS_VI_FPAL_LPN1         42      /* FPAL - Full screen PAL */
+#define OS_VI_FPAL_LPF1         43
+#define OS_VI_FPAL_LAN1         44
+#define OS_VI_FPAL_LAF1         45
+#define OS_VI_FPAL_LPN2         46
+#define OS_VI_FPAL_LPF2         47
+#define OS_VI_FPAL_LAN2         48
+#define OS_VI_FPAL_LAF2         49
+#define OS_VI_FPAL_HPN1         50
+#define OS_VI_FPAL_HPF1         51
+#define OS_VI_FPAL_HAN1         52
+#define OS_VI_FPAL_HAF1         53
+#define OS_VI_FPAL_HPN2         54
+#define OS_VI_FPAL_HPF2         55
+
 /*
  * Video Interface (VI) special features
  */
@@ -611,6 +626,7 @@ typedef struct {
 #define	OS_PFS_VERSION_HI	(OS_PFS_VERSION >> 8)
 #define	OS_PFS_VERSION_LO	(OS_PFS_VERSION & 255)
 
+#define PFS_INODE_SIZE_PER_PAGE 128
 #define PFS_FILE_NAME_LEN       16
 #define PFS_FILE_EXT_LEN        4
 #define BLOCKSIZE		32		/* bytes */
@@ -626,6 +642,14 @@ typedef struct {
 /* File System status */
 #define PFS_INITIALIZED		0x1
 #define PFS_CORRUPTED		0x2		/* File system was corrupted */
+#define PFS_ID_BROKEN           0x4
+#define PFS_MOTOR_INITIALIZED   0x8
+#define PFS_GBPAK_INITIALIZED   0x10
+
+/* Definition for page usage */
+#define PFS_EOF                 1
+#define PFS_PAGE_NOT_EXIST      2
+#define PFS_PAGE_NOT_USED       3
 
 /* File System error number */
 
@@ -641,6 +665,28 @@ typedef struct {
 #define PFS_ERR_EXIST		9	/* file exists 			  */
 #define PFS_ERR_ID_FATAL	10	/* dead ram pack */
 #define PFS_ERR_DEVICE		11	/* wrong device type*/
+#define PFS_ERR_NO_GBCART       12  /* no gb cartridge (64GB-PAK) */
+#define PFS_ERR_NEW_GBCART      13  /* gb cartridge may be changed */
+
+/* Definition for bank */
+#define PFS_ID_BANK_256K    0
+#define PFS_ID_BANK_1M      4
+#define PFS_BANKS_256K      1
+
+#define PFS_WRITTEN             2
+#define DEF_DIR_PAGES           2
+
+#define PFS_ID_0AREA            1
+#define PFS_ID_1AREA            3
+#define PFS_ID_2AREA            4
+#define PFS_ID_3AREA            6
+#define PFS_LABEL_AREA          7
+#define PFS_ID_PAGE             PFS_ONE_PAGE * 0
+
+#define PFS_BANK_LAPPED_BY  8   /* => u8 */
+#define PFS_SECTOR_PER_BANK 32
+#define PFS_INODE_DIST_MAP  (PFS_BANK_LAPPED_BY * PFS_SECTOR_PER_BANK)
+#define PFS_SECTOR_SIZE     (PFS_INODE_SIZE_PER_PAGE/PFS_SECTOR_PER_BANK)
 
 /* definition for EEPROM */
 
@@ -760,6 +806,21 @@ extern OSViMode	osViModeMpalHan1;
 extern OSViMode	osViModeMpalHaf1;
 extern OSViMode	osViModeMpalHpn2;
 extern OSViMode	osViModeMpalHpf2;
+
+extern OSViMode osViModeFpalLpn1;       /* Individual VI FPAL modes */
+extern OSViMode osViModeFpalLpf1;
+extern OSViMode osViModeFpalLan1;
+extern OSViMode osViModeFpalLaf1;
+extern OSViMode osViModeFpalLpn2;
+extern OSViMode osViModeFpalLpf2;
+extern OSViMode osViModeFpalLan2;
+extern OSViMode osViModeFpalLaf2;
+extern OSViMode osViModeFpalHpn1;
+extern OSViMode osViModeFpalHpf1;
+extern OSViMode osViModeFpalHan1;
+extern OSViMode osViModeFpalHaf1;
+extern OSViMode osViModeFpalHpn2;
+extern OSViMode osViModeFpalHpf2;
 
 extern s32 	osRomType;	/* Bulk or cartridge ROM. 0=cartridge 1=bulk */
 extern void 	*osRomBase;	/* Rom base address of the game image */
@@ -936,8 +997,11 @@ extern s32 osEepromLongWrite(OSMesgQueue *, u8, u8 *, int);
 /* MOTOR interface */
 
 extern s32 osMotorInit(OSMesgQueue *, OSPfs *, int);
-extern s32 osMotorStop(OSPfs *);
-extern s32 osMotorStart(OSPfs *);
+#define MOTOR_START		1
+#define MOTOR_STOP		0
+#define	osMotorStart(x)		__osMotorAccess((x), MOTOR_START)
+#define	osMotorStop(x)		__osMotorAccess((x), MOTOR_STOP)
+extern s32 __osMotorAccess(OSPfs *, s32);
 
 /* Enhanced PI interface */
 

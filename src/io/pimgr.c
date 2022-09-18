@@ -3,7 +3,9 @@
 
 OSDevMgr __osPiDevMgr = {0};
 OSPiHandle *__osPiTable = NULL;
-OSPiHandle *__osCurrentHandle[2] = {&CartRomHandle, &LeoDiskHandle};
+OSPiHandle __Dom1SpeedParam;
+OSPiHandle __Dom2SpeedParam;
+OSPiHandle *__osCurrentHandle[2] = {&__Dom1SpeedParam, &__Dom2SpeedParam};
 static OSThread piThread;
 static char piThreadStack[OS_PIM_STACKSIZE];
 #ifdef _DEBUG

@@ -36,6 +36,7 @@ extern OSTime __osCurrentTime;
 extern u32 __osBaseCounter;
 extern u32 __osViIntrCount;
 extern u32 __osTimerCounter;
+extern u32 __osShutdown;
 
 extern __OSEventState __osEventStateTab[OS_NUM_EVENTS];
 

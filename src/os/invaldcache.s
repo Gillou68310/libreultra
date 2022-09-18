@@ -13,8 +13,8 @@ LEAF(osInvalDCache)
 	bgeu t0, t1, 3f
 	#nop
 
-	andi t2, t0, DCACHE_LINEMASK
 	addiu t1, t1, -DCACHE_LINESIZE
+	andi t2, t0, DCACHE_LINEMASK
 	beqz t2, 1f
 
 	subu t0, t0, t2

@@ -99,8 +99,10 @@ Acmd *alEnvmixerPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset,
         if (samples > outCount)
             break;
         
+#ifdef _DEBUG
         assert(samples >= 0);
         assert(samples <= AL_MAX_RSP_SAMPLES);
+#endif
         
         switch (e->ctrlList->type) {
           case (AL_FILTER_START_VOICE_ALT):
@@ -362,7 +364,9 @@ Acmd* _pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount,
      * ask all filters upstream from us to build their command
      * lists.
      */
+#ifdef _DEBUG
     assert(source);
+#endif
     
     ptr = (*source->handler)(source, inp, outCount, sampleOffset, p);
 

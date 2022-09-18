@@ -2097,7 +2097,10 @@ typedef union {
  *                                 componants
  */
 #ifdef	F3DEX_GBI_2x
-ERROR!! gSPInsertMatrix is no longer supported.
+#define gSPInsertMatrix(pkt, where, num)				\
+	ERROR!! gSPInsertMatrix is no longer supported.
+#define gsSPInsertMatrix(where, num)					\
+	ERROR!! gsSPInsertMatrix is no longer supported.
 #else
 #define gSPInsertMatrix(pkt, where, num)				\
 	gMoveWd(pkt, G_MW_MATRIX, where, num)

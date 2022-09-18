@@ -1,15 +1,17 @@
+#include <macros.h>
 #include <os_internal.h>
 #include <rcp.h>
 #include "viint.h"
 #include "../os/osint.h"
 
 OSDevMgr __osViDevMgr = {0};
+u32 __additional_scanline = 0;
 static OSThread viThread;
-static unsigned char viThreadStack[OS_VIM_STACKSIZE];
+static unsigned char viThreadStack[OS_VIM_STACKSIZE] ALIGNED(16);
 static OSMesgQueue viEventQueue;
-static OSMesg viEventBuf[5];
-static OSIoMesg viRetraceMsg;
-static OSIoMesg viCounterMsg;
+static OSMesg viEventBuf[5] ALIGNED(8);
+static OSIoMesg viRetraceMsg ALIGNED(8);
+static OSIoMesg viCounterMsg ALIGNED(8);
 
 static void viMgrMain(void *arg);
 void osCreateViManager(OSPri pri)
@@ -20,6 +22,7 @@ void osCreateViManager(OSPri pri)
 	if (__osViDevMgr.active == 0)
 	{
 		__osTimerServicesInit();
+        __additional_scanline = 0;
 		osCreateMesgQueue(&viEventQueue, viEventBuf, 5);
 		viRetraceMsg.hdr.type = OS_MESG_TYPE_VRETRACE;
 		viRetraceMsg.hdr.pri = OS_MESG_PRI_NORMAL;

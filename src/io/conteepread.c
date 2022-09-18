@@ -22,30 +22,32 @@ s32 osEepromRead(OSMesgQueue *mq, u8 address, u8 *buffer)
 	if (ret != 0)
 	{
 		__osSiRelAccess();
-		return CONT_NO_RESPONSE_ERROR;
+		return ret;
 	}
 	switch (type)
 	{
 	case CONT_EEPROM:
-		if (address > EEPROM_MAXBLOCKS)
+		if (address >= EEPROM_MAXBLOCKS)
 		{
-			__osSiRelAccess();
-			return -1;
+			ret = -1;
 		}
-
 		break;
 	case CONT_EEPROM | CONT_EEP16K:
-		if (address > EEP16K_MAXBLOCKS) //not technically possible
+		if (address >= EEP16K_MAXBLOCKS) //not technically possible
 		{
-			__osSiRelAccess();
 			return -1;
 		}
 		break;
 	default:
-		__osSiRelAccess();
-		return CONT_NO_RESPONSE_ERROR;
+		ret = CONT_NO_RESPONSE_ERROR;
 		break;
 	}
+
+    if (ret != 0) {
+        __osSiRelAccess();
+        return ret;
+    }
+    
 	while (sdata.status & CONT_EEPROM_BUSY)
 	{
 		__osEepStatus(mq, &sdata);
@@ -78,20 +80,12 @@ static void __osPackEepReadData(u8 address)
 	__OSContEepromFormat eepromformat;
 	int i;
 	ptr = (u8 *)&__osEepPifRam.ramarray;
-	for (i = 0; i < ARRLEN(__osEepPifRam.ramarray); i++)
-	{
-		__osEepPifRam.ramarray[i] = CONT_CMD_NOP;
-	}
 	__osEepPifRam.pifstatus = CONT_CMD_EXE;
 
 	eepromformat.txsize = CONT_CMD_READ_EEPROM_TX;
 	eepromformat.rxsize = CONT_CMD_READ_EEPROM_RX;
 	eepromformat.cmd = CONT_CMD_READ_EEPROM;
 	eepromformat.address = address;
-	for (i = 0; i < ARRLEN(eepromformat.data); i++)
-	{
-		eepromformat.data[i] = 0;
-	}
 	for (i = 0; i < 4; i++) //skip the first 4 bytes
 	{
 		*ptr++ = 0;

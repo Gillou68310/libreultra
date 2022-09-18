@@ -9,7 +9,7 @@ s32 osPfsNumFiles(OSPfs *pfs, s32 *max_files, s32 *files_used)
     int files;
     files = 0;
     PFS_CHECK_STATUS;
-    PFS_CHECK_ID;
+    ERRCK(__osCheckId(pfs));
     SET_ACTIVEBANK_TO_ZERO;
     for (j = 0; j < pfs->dir_size; j++)
     {

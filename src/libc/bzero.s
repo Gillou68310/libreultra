@@ -3,10 +3,8 @@
 #include <sys/asm.h>
 
 .text
-.weakext bzero _bzero
-.weakext blkclr, _blkclr
-LEAF(_bzero)
-XLEAF(_blkclr)
+LEAF(bzero)
+XLEAF(blkclr)
 	negu v1, a0
 	blt a1, 12, bytezero
 
@@ -23,11 +21,11 @@ blkzero:
 
 	addu a3, a3,a0
 1:
+	sw zero, 0(a0)
+	sw zero, 4(a0)
+	sw zero, 8(a0)
+	sw zero, 12(a0)
 	addiu a0, a0, 32
-	sw zero, -32(a0)
-	sw zero, -28(a0)
-	sw zero, -24(a0)
-	sw zero, -20(a0)
 	sw zero, -16(a0)
 	sw zero, -12(a0)
 	sw zero, -8(a0)
@@ -55,4 +53,4 @@ bytezero:
 	bne a0, a1,1b
 zerodone:
 	jr ra
-END(_bzero)
+END(bzero)

@@ -71,7 +71,7 @@ void __osSetTimerIntr(OSTime tim)
 	u32 savedMask;
 	savedMask = __osDisableInt();
 	__osTimerCounter = osGetCount();
-	NewTime = tim + __osTimerCounter;
+	NewTime = __osTimerCounter + tim;
 	__osSetCompare(NewTime);
 	__osRestoreInt(savedMask);
 }

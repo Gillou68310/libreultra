@@ -5,7 +5,7 @@
 
 //should go somewhere else but
 #define ARRLEN(x) ((s32)(sizeof(x) / sizeof(x[0])))
-#define CHNL_ERR(format) ((format.rxsize & CHNL_ERR_MASK) >> 4)
+#define CHNL_ERR(format) (((format).rxsize & CHNL_ERR_MASK) >> 4)
 
 typedef struct
 {
@@ -52,7 +52,8 @@ typedef struct
     /* 0x1 */ u8 txsize;
     /* 0x2 */ u8 rxsize;
     /* 0x3 */ u8 cmd;
-    /* 0x4 */ u16 address;
+    /* 0x4 */ u8 addrh;
+    /* 0x5 */ u8 addrl;
     /* 0x6 */ u8 data[BLOCKSIZE];
     /* 0x26 */ u8 datacrc;
 } __OSContRamReadFormat;
@@ -138,6 +139,28 @@ typedef struct
 #define DIR_STATUS_UNKNOWN 1
 #define DIR_STATUS_OCCUPIED 2
 
+// Controller accessory addresses
+// https://github.com/joeldipops/TransferBoy/blob/master/docs/TransferPakReference.md
+
+// Accesory detection
+#define CONT_ADDR_DETECT    0x8000
+// Rumble
+#define CONT_ADDR_RUMBLE    0xC000
+// Controller Pak
+// Transfer Pak
+#define CONT_ADDR_GB_POWER  0x8000 // Same as the detection address, but semantically different
+#define CONT_ADDR_GB_BANK   0xA000
+#define CONT_ADDR_GB_STATUS 0xB000
+
+// Addresses sent to controller accessories are in blocks, not bytes
+#define CONT_BLOCKS(x) ((x) / BLOCKSIZE)
+
+// Block addresses of the above
+#define CONT_BLOCK_DETECT    CONT_BLOCKS(CONT_ADDR_DETECT)
+#define CONT_BLOCK_RUMBLE    CONT_BLOCKS(CONT_ADDR_RUMBLE)
+#define CONT_BLOCK_GB_POWER  CONT_BLOCKS(CONT_ADDR_GB_POWER)
+#define CONT_BLOCK_GB_BANK   CONT_BLOCKS(CONT_ADDR_GB_BANK)
+#define CONT_BLOCK_GB_STATUS CONT_BLOCKS(CONT_ADDR_GB_STATUS)
 
 typedef struct
 {
@@ -154,9 +177,9 @@ s32 __osCheckPackId(OSPfs *pfs, __OSPackId *temp);
 s32 __osGetId(OSPfs *pfs);
 s32 __osCheckId(OSPfs *pfs);
 s32 __osPfsRWInode(OSPfs *pfs, __OSInode *inode, u8 flag, u8 bank);
-s32 __osPfsSelectBank(OSPfs *pfs);
+s32 __osPfsSelectBank(OSPfs *pfs, u8 bank);
 s32 __osPfsDeclearPage(OSPfs *pfs, __OSInode *inode, int file_size_in_pages, int *first_page, u8 bank, int *decleared, int *last_page);
-s32 __osPfsReleasePages(OSPfs *pfs, __OSInode *inode, u8 start_page, u16 *sum, u8 bank, __OSInodeUnit *last_page, int flag);
+s32 __osPfsReleasePages(OSPfs *pfs, __OSInode *inode, u8 start_page, u8 bank, __OSInodeUnit *last_page);
 s32 __osBlockSum(OSPfs *pfs, u8 page_no, u16 *sum, u8 bank);
 s32 __osContRamRead(OSMesgQueue *mq, int channel, u16 address, u8 *buffer);
 s32 __osContRamWrite(OSMesgQueue *mq, int channel, u16 address, u8 *buffer, int force);
@@ -186,14 +209,12 @@ extern u8 __osMaxControllers;
 #define SET_ACTIVEBANK_TO_ZERO        \
     if (pfs->activebank != 0)         \
     {                                 \
-        pfs->activebank = 0;          \
-        ERRCK(__osPfsSelectBank(pfs)) \
+        ERRCK(__osPfsSelectBank(pfs, 0)) \
     }
 
 #define PFS_CHECK_ID                              \
     if (__osCheckId(pfs) == PFS_ERR_NEW_PACK) \
         return PFS_ERR_NEW_PACK;
-#endif
 
 #define PFS_CHECK_STATUS                          \
     if ((pfs->status & PFS_INITIALIZED) == 0) \
@@ -205,3 +226,5 @@ extern u8 __osMaxControllers;
     __osSiRelAccess();                      \
     if (ret != 0)                           \
         return ret;
+
+#endif

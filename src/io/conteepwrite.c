@@ -17,7 +17,6 @@ s32 osEepromWrite(OSMesgQueue *mq, u8 address, u8 *buffer)
     ret = 0;
     ptr = (u8 *)&__osEepPifRam.ramarray;
     __osSiGetAccess();
-    ret = __osEepStatus(mq, &sdata); //why is this duplicated?
     ret = __osEepStatus(mq, &sdata);
 
     type = sdata.type & (CONT_EEPROM | CONT_EEP16K);
@@ -25,30 +24,33 @@ s32 osEepromWrite(OSMesgQueue *mq, u8 address, u8 *buffer)
     if (ret != 0)
     {
         __osSiRelAccess();
-        return CONT_NO_RESPONSE_ERROR;
+        return ret;
     }
     switch (type)
     {
     case CONT_EEPROM:
-        if (address > EEPROM_MAXBLOCKS)
+        if (address >= EEPROM_MAXBLOCKS)
         {
-            __osSiRelAccess();
-            return -1;
+            ret = -1;
         }
 
         break;
     case CONT_EEPROM | CONT_EEP16K:
-        if (address > EEP16K_MAXBLOCKS) //not technically possible
+        if (address >= EEP16K_MAXBLOCKS) //not technically possible
         {
-            __osSiRelAccess();
-            return -1;
+            ret = -1;
         }
         break;
     default:
-        __osSiRelAccess();
-        return CONT_NO_RESPONSE_ERROR;
+        ret = CONT_NO_RESPONSE_ERROR;
         break;
     }
+
+    if (ret != 0) {
+        __osSiRelAccess();
+        return ret;
+    }
+    
     while (sdata.status & CONT_EEPROM_BUSY)
     {
         __osEepStatus(mq, &sdata);
@@ -59,10 +61,8 @@ s32 osEepromWrite(OSMesgQueue *mq, u8 address, u8 *buffer)
     ret = __osSiRawStartDma(OS_READ, &__osEepPifRam); //recv response
     __osContLastCmd = CONT_CMD_WRITE_EEPROM;
     osRecvMesg(mq, NULL, OS_MESG_BLOCK);
-    for (i = 0; i < 4; i++) //skip the first 4 bytes
-    {
-        ptr++;
-    }
+    //skip the first 4 bytes
+    ptr += 4;
     eepromformat = *(__OSContEepromFormat *)ptr;
 
     //probably indicates an error, from PIF
@@ -77,10 +77,6 @@ static void __osPackEepWriteData(u8 address, u8 *buffer)
     __OSContEepromFormat eepromformat;
     int i;
     ptr = (u8 *)&__osEepPifRam.ramarray;
-    for (i = 0; i < ARRLEN(__osEepPifRam.ramarray); i++)
-    {
-        __osEepPifRam.ramarray[i] = CONT_CMD_NOP;
-    }
     __osEepPifRam.pifstatus = CONT_CMD_EXE;
 
     eepromformat.txsize = CONT_CMD_WRITE_EEPROM_TX;
@@ -139,7 +135,7 @@ s32 __osEepStatus(OSMesgQueue *mq, OSContStatus *data)
 
     ret = __osSiRawStartDma(OS_WRITE, &__osEepPifRam);
     osRecvMesg(mq, NULL, OS_MESG_BLOCK);
-    __osContLastCmd = CONT_CMD_REQUEST_STATUS;
+    __osContLastCmd = CONT_CMD_END;
     ret = __osSiRawStartDma(OS_READ, &__osEepPifRam);
     osRecvMesg(mq, NULL, OS_MESG_BLOCK);
 

@@ -304,7 +304,9 @@ static s32 __nextSampleTime(ALSynth *drvr, ALPlayer **client)
     ALMicroTime delta = 0x7fffffff;     /* max delta for s32 */
     ALPlayer *cl;
 
+#ifdef _DEBUG
     assert(drvr->head);
+#endif
     *client = 0;
     
     for (cl = drvr->head; cl != 0; cl = cl->next) {
