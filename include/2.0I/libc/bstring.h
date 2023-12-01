@@ -25,10 +25,10 @@ extern "C" {
 
 #ident "$Revision: 1.4 $"
 
-extern void	bcopy(const void *, void *, int);
-extern int	bcmp(const void *, const void *, int);
-extern void	bzero(void *, int);
-extern void	blkclr(void *, int);
+extern void	bcopy(const void *, void *, size_t);
+extern int	bcmp(const void *, const void *, size_t);
+extern void	bzero(void *, size_t);
+extern void	blkclr(void *, size_t);
 
 #ifdef __cplusplus
 }
