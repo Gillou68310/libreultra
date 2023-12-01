@@ -94,8 +94,8 @@ Acmd *alFxPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset,
 
     for (i = 0; i < r->section_count; i++) {
 	d  = &r->delay[i];  /* get the ALDelay structure */
-	in_ptr  = &r->input[-d->input];
-	out_ptr = &r->input[-d->output];
+	in_ptr  = &r->input[-(s32)d->input];
+	out_ptr = &r->input[-(s32)d->output];
 	
 	if (in_ptr == prev_out_ptr) {
 	    SWAP(buff1, buff2);
@@ -270,8 +270,8 @@ Acmd *_loadOutputBuffer(ALFx *r, ALDelay *d, s32 buff, s32 incount, Acmd *p)
          * negative of that as an index into the delay buffer. loadBuffer that uses this
          * value then bumps it up if it is below the  delay buffer.
          */ 
-        out_ptr = &r->input[-(d->output - d->rsdelta)];
-        ramalign = ((s32)out_ptr & 0x7) >> 1; /* calculate the number of samples needed 
+        out_ptr = &r->input[-(s32)(d->output - d->rsdelta)];
+        ramalign = ((intptr_t)out_ptr & 0x7) >> 1; /* calculate the number of samples needed 
                                                to align the buffer*/
 #ifdef _DEBUG
 #if 0
@@ -295,12 +295,12 @@ Acmd *_loadOutputBuffer(ALFx *r, ALDelay *d, s32 buff, s32 incount, Acmd *p)
         ratio = (s32)(fratio * UNITY_PITCH);
         /* set the buffers, and do the resample */
         aSetBuffer(ptr++, 0, rbuff + (ramalign<<1), buff, incount<<1);
-        aResample(ptr++, d->rs->first, ratio, osVirtualToPhysical(d->rs->state));
+        aResample(ptr++, d->rs->first, ratio, (s16*)osVirtualToPhysical(d->rs->state));
       
         d->rs->first = 0; /* turn off first time flag */
         d->rsdelta += count - incount; /* add the number of samples to d->rsdelta */
     } else {
-        out_ptr = &r->input[-d->output];
+        out_ptr = &r->input[-(s32)d->output];
         ptr = _loadBuffer(r, out_ptr, buff, incount, ptr);
     }
 
@@ -339,12 +339,12 @@ Acmd *_loadBuffer(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p)
         before_end = delay_end - curr_ptr;
         
         aSetBuffer(ptr++, 0, buff, 0, before_end<<1);
-        aLoadBuffer(ptr++, osVirtualToPhysical(curr_ptr));
+        aLoadBuffer(ptr++, (void*)osVirtualToPhysical(curr_ptr));
         aSetBuffer(ptr++, 0, buff+(before_end<<1), 0, after_end<<1);
-        aLoadBuffer(ptr++, osVirtualToPhysical(r->base));
+        aLoadBuffer(ptr++, (void*)osVirtualToPhysical(r->base));
     } else {
         aSetBuffer(ptr++, 0, buff, 0, count<<1);
-        aLoadBuffer(ptr++, osVirtualToPhysical(curr_ptr));
+        aLoadBuffer(ptr++, (void*)osVirtualToPhysical(curr_ptr));
     }
 
     aSetBuffer(ptr++, 0, 0, 0, count<<1);
@@ -382,13 +382,13 @@ Acmd *_saveBuffer(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p)
         before_end = delay_end - curr_ptr;
 
         aSetBuffer(ptr++, 0, 0, buff, before_end<<1);
-        aSaveBuffer(ptr++, osVirtualToPhysical(curr_ptr));
+        aSaveBuffer(ptr++, (s16*)osVirtualToPhysical(curr_ptr));
         aSetBuffer(ptr++, 0, 0, buff+(before_end<<1), after_end<<1);
-        aSaveBuffer(ptr++, osVirtualToPhysical(r->base));
+        aSaveBuffer(ptr++, (s16*)osVirtualToPhysical(r->base));
         aSetBuffer(ptr++, 0, 0, 0, count<<1);
     } else {
         aSetBuffer(ptr++, 0, 0, buff, count<<1);
-        aSaveBuffer(ptr++, osVirtualToPhysical(curr_ptr));
+        aSaveBuffer(ptr++, (s16*)osVirtualToPhysical(curr_ptr));
     }
 
 #ifdef AUD_PROFILE
@@ -403,7 +403,7 @@ Acmd *_filterBuffer(ALLowPass *lp, s32 buff, s32 count, Acmd *p)
     Acmd	*ptr = p;
 
     aSetBuffer(ptr++, 0, buff, buff, count<<1);
-    aLoadADPCM(ptr++, 32, osVirtualToPhysical(lp->fcvec.fccoef));
+    aLoadADPCM(ptr++, 32, (s16*)osVirtualToPhysical(lp->fcvec.fccoef));
     aPoleFilter(ptr++, lp->first, lp->fgain, osVirtualToPhysical(lp->fstate));
     lp->first = 0;
 

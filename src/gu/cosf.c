@@ -30,8 +30,10 @@
  * ====================================================================
  */
 
+#ifndef _MSC_VER
 #pragma weak fcos = __cosf
 #pragma weak cosf = __cosf
+#endif 
 #define	fcos __cosf
 
 /* coefficients for polynomial approximation of cos on +/- pi/2 */

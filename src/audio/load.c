@@ -100,7 +100,7 @@ Acmd *alAdpcmPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
          * Now fix up state info to reflect the loop start point
          */
         f->lastsam = f->loop.start &0xf;
-        f->memin = (s32) f->table->base + ADPCMFBYTES *
+        f->memin = (intptr_t) f->table->base + ADPCMFBYTES *
             ((s32) (f->loop.start>>LFSAMPLES) + 1);
         f->sample = f->loop.start;
 
@@ -162,7 +162,7 @@ Acmd *alAdpcmPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
      * overFlow is the number of bytes past the end
      * of the bitstream I try to generate
      */
-    overFlow = f->memin + nbytes - ((s32) f->table->base + f->table->len);
+    overFlow = f->memin + nbytes - ((intptr_t) f->table->base + f->table->len);
     if (overFlow < 0)
         overFlow = 0;
     nOver = (overFlow/ADPCMFBYTES)<<LFSAMPLES;
@@ -210,7 +210,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
 {
     Acmd        *ptr = p;
     s32         nbytes;
-    s32         dramLoc;
+    intptr_t    dramLoc;
     s32         dramAlign;
     s32         dmemAlign;
     s32         overFlow;
@@ -238,7 +238,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
             dramAlign = dramLoc & 0x7;
             nbytes += dramAlign;
             aSetBuffer(ptr++, 0, *outp, 0, nbytes + 8 - (nbytes & 0x7));
-            aLoadBuffer(ptr++, dramLoc - dramAlign);
+            aLoadBuffer(ptr++, (void*)(dramLoc - dramAlign));
         } else 
             dramAlign = 0; 
             
@@ -247,7 +247,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
          */
         *outp += dramAlign;
         
-        f->memin = (s32) f->table->base + (f->loop.start<<1);
+        f->memin = (intptr_t) f->table->base + (f->loop.start<<1);
         f->sample = f->loop.start;
         op = *outp;
         
@@ -284,7 +284,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
                 dmemAlign = 0;
 
             aSetBuffer(ptr++, 0, op + dmemAlign, 0, nbytes + 8 - (nbytes & 0x7));
-            aLoadBuffer(ptr++, dramLoc - dramAlign);
+            aLoadBuffer(ptr++, (void*)(dramLoc - dramAlign));
 
             /*
              * Merge the two sections in DMEM.
@@ -308,7 +308,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
      */
 
     nbytes = outCount<<1;
-    overFlow = f->memin + nbytes - ((s32) f->table->base + f->table->len);
+    overFlow = f->memin + nbytes - ((intptr_t) f->table->base + f->table->len);
     if (overFlow < 0)
         overFlow = 0;
     if (overFlow > nbytes)
@@ -326,7 +326,7 @@ Acmd *alRaw16Pull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd 
             dramAlign = dramLoc & 0x7;
             nbytes += dramAlign;
             aSetBuffer(ptr++, 0, *outp, 0, nbytes + 8 - (nbytes & 0x7));
-            aLoadBuffer(ptr++, dramLoc - dramAlign);
+            aLoadBuffer(ptr++, (void*)(dramLoc - dramAlign));
         } else      
             dramAlign = 0; 
         *outp += dramAlign;
@@ -359,7 +359,7 @@ alLoadParam(void *filter, s32 paramID, void *param)
     switch (paramID) {
         case (AL_FILTER_SET_WAVETABLE):
             a->table = (ALWaveTable *) param;
-            a->memin = (s32) a->table->base;
+            a->memin = (intptr_t) a->table->base;
             a->sample = 0;
             switch (a->table->type){
                 case (AL_ADPCM_WAVE):
@@ -415,7 +415,7 @@ alLoadParam(void *filter, s32 paramID, void *param)
 	    /* Get loop info according to table type. */
 	    if (a->table)
 	    {
-		a->memin  = (s32) a->table->base;
+		a->memin  = (intptr_t) a->table->base;
 		if (a->table->type == AL_ADPCM_WAVE)
 		{
 		    if (a->table->waveInfo.adpcmWave.loop)
@@ -438,10 +438,8 @@ alLoadParam(void *filter, s32 paramID, void *param)
 Acmd *_decodeChunk(Acmd *ptr, ALLoadFilter *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags)
 
 {
-
-    s32
-        dramAlign,
-        dramLoc;
+    intptr_t dramLoc;
+    s32 dramAlign;
     
     if (nbytes > 0){
         dramLoc = (f->dma)(f->memin, nbytes, f->dmaState);
@@ -452,7 +450,7 @@ Acmd *_decodeChunk(Acmd *ptr, ALLoadFilter *f, s32 tsam, s32 nbytes, s16 outp, s
         dramAlign = dramLoc & 0x7;
         nbytes += dramAlign;
         aSetBuffer(ptr++, 0, inp, 0, nbytes + 8 - (nbytes & 0x7));
-        aLoadBuffer(ptr++, dramLoc - dramAlign);
+        aLoadBuffer(ptr++, (void*)(dramLoc - dramAlign));
     } else
         dramAlign = 0;
 

@@ -396,10 +396,10 @@ Acmd* _pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount,
 	aSetVolume(ptr++, A_LEFT  | A_RATE, e->ltgt, e->lratm, e->lratl);
 	aSetVolume(ptr++, A_RIGHT | A_RATE, e->rtgt, e->rratm, e->rratl);
 	aSetVolume(ptr++, A_AUX, e->dryamt, 0, e->wetamt);
-	aEnvMixer (ptr++, A_INIT | A_AUX, osVirtualToPhysical(e->state));
+	aEnvMixer (ptr++, A_INIT | A_AUX, (s16*)osVirtualToPhysical(e->state));
     }
     else
-	aEnvMixer(ptr++, A_CONTINUE | A_AUX, osVirtualToPhysical(e->state));
+	aEnvMixer(ptr++, A_CONTINUE | A_AUX, (s16*)osVirtualToPhysical(e->state));
 
     /*
      * bump the input buffer pointer

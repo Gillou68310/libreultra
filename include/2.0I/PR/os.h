@@ -160,7 +160,7 @@ typedef struct {
 typedef struct {
 	OSIoMesgHdr	hdr;		/* Message header */
 	void *		dramAddr;	/* RDRAM buffer address (DMA) */
-	u32		devAddr;	/* Device buffer address (DMA) */
+	uintptr_t	devAddr;	/* Device buffer address (DMA) */
 	u32 		size;		/* DMA transfer size in bytes */
 	OSPiHandle	*piHandle;	/* PI device handle */
 } OSIoMesg;
@@ -895,14 +895,22 @@ extern void		osSetTLBASID(s32);
 
 /* Address translation routines and macros */
 
-extern u32		 osVirtualToPhysical(void *);
+extern uintptr_t	 osVirtualToPhysical(void *);
 extern void *		 osPhysicalToVirtual(u32);
 
+#ifdef TARGET_N64
 #define	OS_K0_TO_PHYSICAL(x)	(u32)(((char *)(x)-0x80000000))
 #define	OS_K1_TO_PHYSICAL(x)	(u32)(((char *)(x)-0xa0000000))
 
 #define	OS_PHYSICAL_TO_K0(x)	(void *)(((u32)(x)+0x80000000))
 #define	OS_PHYSICAL_TO_K1(x)	(void *)(((u32)(x)+0xa0000000))
+#else
+#define	OS_K0_TO_PHYSICAL(x)	(x)
+#define	OS_K1_TO_PHYSICAL(x)	(x)
+
+#define	OS_PHYSICAL_TO_K0(x)	(x)
+#define	OS_PHYSICAL_TO_K1(x)	(x)
+#endif
 
 /* I/O operations */
 
@@ -926,7 +934,7 @@ extern s32		osPiRawReadIo(u32, u32 *);
 extern s32		osPiRawStartDma(s32, u32, void *, u32);
 extern s32		osPiWriteIo(u32, u32);
 extern s32		osPiReadIo(u32, u32 *);
-extern s32		osPiStartDma(OSIoMesg *, s32, s32, u32, void *, u32,
+extern s32		osPiStartDma(OSIoMesg *, s32, s32, uintptr_t, void *, u32,
 				     OSMesgQueue *);
 extern void		osCreatePiManager(OSPri, OSMesgQueue *, OSMesg *, s32);
 
