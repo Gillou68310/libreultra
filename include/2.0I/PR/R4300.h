@@ -48,6 +48,7 @@
 /*
  * Address conversion macros
  */
+#ifdef TARGET_N64
 #ifdef _LANGUAGE_ASSEMBLY
 
 #define	K0_TO_K1(x)	((x)|0xA0000000)	/* kseg0 to kseg1 */
@@ -69,6 +70,15 @@
 #define	PHYS_TO_K1(x)	((u32)(x)|0xA0000000)	/* physical to kseg1 */
 
 #endif	/* _LANGUAGE_ASSEMBLY */
+#else
+#define	K0_TO_K1(x)	    (x)
+#define	K1_TO_K0(x)	    (x)
+#define	K0_TO_PHYS(x)	(x)
+#define	K1_TO_PHYS(x)	(x)
+#define	KDM_TO_PHYS(x)	(x)
+#define	PHYS_TO_K0(x)	(x)
+#define	PHYS_TO_K1(x)	(x)
+#endif
 
 /*
  * Address predicates
